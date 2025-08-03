@@ -3,6 +3,7 @@ import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { Stack } from "expo-router";
 import { Platform } from "react-native";
 import { useEffect } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 const convexUrl = process.env.EXPO_PUBLIC_CONVEX_URL || "https://bold-otter-585.convex.cloud";
 const convex = new ConvexReactClient(convexUrl, {
@@ -120,13 +121,15 @@ function MobileWebStyles() {
 
 export default function RootLayout() {
   return (
-    <ConvexProvider client={convex}>
-      <ThemeProvider>
-        <MobileWebStyles />
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(tabs)" />
-        </Stack>
-      </ThemeProvider>
-    </ConvexProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ConvexProvider client={convex}>
+        <ThemeProvider>
+          <MobileWebStyles />
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(tabs)" />
+          </Stack>
+        </ThemeProvider>
+      </ConvexProvider>
+    </GestureHandlerRootView>
   );
 }

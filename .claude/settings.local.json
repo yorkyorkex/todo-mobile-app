@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(npx expo start:*)",
+      "Bash(npx expo export:*)",
+      "Bash(npx convex deploy)",
+      "Bash(npx convex dev:*)"
     ],
     "deny": []
   }
