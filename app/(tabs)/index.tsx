@@ -1,7 +1,12 @@
 import { createHomeStyles } from "@/assets/styles/home.styles";
+import CategoryOverviewCard from "@/components/CategoryOverviewCard";
+import CelebrationAnimation from "@/components/CelebrationAnimation";
 import EmptyState from "@/components/EmptyState";
+import FloatingActionButton from "@/components/FloatingActionButton";
 import Header from "@/components/Header";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import SwipeableCard from "@/components/SwipeableCard";
+import TaskCard from "@/components/TaskCard";
 import TodoInput from "@/components/TodoInput";
 import { api } from "@/convex/_generated/api";
 import { Doc, Id } from "@/convex/_generated/dataModel";
@@ -10,16 +15,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { useMutation, useQuery } from "convex/react";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
-import { Alert, FlatList, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, FlatList, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import Animated, { 
   FadeInDown, 
   FadeOutRight
 } from 'react-native-reanimated';
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
-import SwipeableCard from "@/components/SwipeableCard";
-import FloatingActionButton from "@/components/FloatingActionButton";
-import CelebrationAnimation from "@/components/CelebrationAnimation";
 
 type Todo = Doc<"todos">;
 
@@ -137,17 +139,6 @@ export default function Index() {
     }
   };
 
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case "work": return "briefcase";
-      case "personal": return "person";
-      case "health": return "fitness";
-      case "learning": return "library";
-      case "shopping": return "bag";
-      case "travel": return "airplane";
-      default: return "person";
-    }
-  };
 
   const renderTodoItem = ({ item, index }: { item: Todo, index: number }) => {
     // Safety check for item
@@ -367,23 +358,164 @@ export default function Index() {
     },
   ];
 
+  // Group todos by category for overview cards
+  const getCategories = () => {
+    if (!todos) return [];
+    
+    const categoryData = {
+      work: { count: 0, completed: 0 },
+      personal: { count: 0, completed: 0 },
+      health: { count: 0, completed: 0 },
+      learning: { count: 0, completed: 0 },
+      shopping: { count: 0, completed: 0 },
+      travel: { count: 0, completed: 0 },
+    };
+
+    todos.forEach(todo => {
+      const category = todo.category || 'personal';
+      if (categoryData[category as keyof typeof categoryData]) {
+        categoryData[category as keyof typeof categoryData].count++;
+        if (todo.isCompleted) {
+          categoryData[category as keyof typeof categoryData].completed++;
+        }
+      }
+    });
+
+    return Object.entries(categoryData)
+      .filter(([_, data]) => data.count > 0)
+      .map(([category, data]) => ({
+        category,
+        ...data,
+      }));
+  };
+
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case 'work': return 'briefcase';
+      case 'personal': return 'person';
+      case 'health': return 'fitness';
+      case 'learning': return 'library';
+      case 'shopping': return 'bag';
+      case 'travel': return 'airplane';
+      default: return 'list';
+    }
+  };
+
+  const categories = getCategories();
+  const ongoingTodos = todos?.filter(todo => !todo.isCompleted) || [];
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    scrollContainer: {
+      flex: 1,
+    },
+    categorySection: {
+      paddingHorizontal: 20,
+      marginBottom: 24,
+    },
+    sectionTitle: {
+      fontSize: 22,
+      fontWeight: '700',
+      color: colors.text,
+      marginBottom: 16,
+    },
+    categoryGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+    },
+    categoryCardWrapper: {
+      width: '48%',
+      marginBottom: 12,
+    },
+    ongoingSection: {
+      paddingHorizontal: 20,
+      marginBottom: 100,
+    },
+    sectionHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 16,
+    },
+    seeAllButton: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 20,
+      backgroundColor: colors.surface,
+    },
+    seeAllText: {
+      fontSize: 14,
+      color: colors.primary,
+      fontWeight: '600',
+    },
+  });
+
   return (
-    <LinearGradient colors={colors.gradients.background} style={homeStyles.container}>
+    <LinearGradient colors={colors.gradients.background} style={styles.container}>
       <StatusBar barStyle={colors.statusBarStyle} />
-      <SafeAreaView style={homeStyles.safeArea}>
-        <Header />
-
-        <TodoInput />
-
-        <FlatList
-          data={Array.isArray(todos) ? todos : []}
-          renderItem={({ item, index }) => renderTodoItem({ item, index })}
-          keyExtractor={(item) => item?._id || `item-${index}`}
-          style={homeStyles.todoList}
-          contentContainerStyle={homeStyles.todoListContent}
-          ListEmptyComponent={<EmptyState />}
+      <SafeAreaView style={styles.container}>
+        <ScrollView 
+          style={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
-        />
+        >
+          <Header />
+
+          <TodoInput />
+
+          {/* Category Overview Cards */}
+          {categories.length > 0 && (
+            <View style={styles.categorySection}>
+              <View style={styles.categoryGrid}>
+                {categories.map((category) => (
+                  <View key={category.category} style={styles.categoryCardWrapper}>
+                    <CategoryOverviewCard
+                      category={category.category}
+                      taskCount={category.count}
+                      completedCount={category.completed}
+                      icon={getCategoryIcon(category.category) as keyof typeof Ionicons.glyphMap}
+                      onPress={() => {
+                        // Filter todos by category
+                        console.log(`Viewing ${category.category} tasks`);
+                      }}
+                    />
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* Ongoing Tasks Section */}
+          <View style={styles.ongoingSection}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Ongoing</Text>
+              <TouchableOpacity style={styles.seeAllButton} activeOpacity={0.8}>
+                <Text style={styles.seeAllText}>See All</Text>
+              </TouchableOpacity>
+            </View>
+
+            {ongoingTodos.length > 0 ? (
+              ongoingTodos.slice(0, 5).map((item, index) => (
+                <TaskCard
+                  key={item._id}
+                  title={item.text}
+                  category={item.category || 'personal'}
+                  priority={item.priority || 'medium'}
+                  dueDate={item.dueDate ? new Date(item.dueDate).toLocaleDateString() : undefined}
+                  progress={Math.floor(Math.random() * 100)} // Mock progress for now
+                  timeRange={item.estimatedDuration ? `${item.estimatedDuration}h` : undefined}
+                  isCompleted={item.isCompleted}
+                  onPress={() => handleEditTodo(item)}
+                  onToggle={() => handleToggleTodo(item._id)}
+                />
+              ))
+            ) : (
+              <EmptyState />
+            )}
+          </View>
+        </ScrollView>
 
         <FloatingActionButton actions={Array.isArray(fabActions) ? fabActions : []} />
         

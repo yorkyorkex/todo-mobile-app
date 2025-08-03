@@ -4,7 +4,7 @@ import useTheme from "@/hooks/useTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "convex/react";
 import { LinearGradient } from "expo-linear-gradient";
-import { Text, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import GlassCard from "./GlassCard";
 
 const Header = () => {
@@ -22,50 +22,115 @@ const Header = () => {
   const todayCompleted = stats?.todayCompleted || 0;
   const weekCompleted = stats?.weekCompleted || 0;
 
-  return (
-    <View style={homeStyles.header}>
-      <GlassCard intensity={60}>
-        <View style={{ padding: 24 }}>
-          <View style={homeStyles.titleContainer}>
-            <LinearGradient colors={colors.gradients.primary} style={homeStyles.iconContainer}>
-              <Ionicons name="rocket-outline" size={28} color="#fff" />
-            </LinearGradient>
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good Morning";
+    if (hour < 17) return "Good Afternoon";
+    return "Good Evening";
+  };
 
-            <View style={homeStyles.titleTextContainer}>
-              <Text style={homeStyles.title}>Focus Zone ⚡</Text>
-              <Text style={homeStyles.subtitle}>
-                {completedCount} of {totalCount} tasks completed
-              </Text>
+  const styles = StyleSheet.create({
+    headerContainer: {
+      paddingHorizontal: 20,
+      paddingTop: 16,
+      paddingBottom: 8,
+    },
+    topRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 20,
+    },
+    greetingContainer: {
+      flex: 1,
+    },
+    greeting: {
+      fontSize: 16,
+      color: colors.textMuted,
+      fontWeight: '500',
+    },
+    userName: {
+      fontSize: 28,
+      fontWeight: '800',
+      color: colors.text,
+      marginTop: 4,
+    },
+    profileButton: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    titleSection: {
+      marginBottom: 20,
+    },
+    mainTitle: {
+      fontSize: 32,
+      fontWeight: '800',
+      color: colors.text,
+      marginBottom: 8,
+    },
+    subtitle: {
+      fontSize: 16,
+      color: colors.textMuted,
+      fontWeight: '500',
+    },
+  });
+
+  return (
+    <View style={styles.headerContainer}>
+      <GlassCard intensity={40}>
+        <View style={{ padding: 24 }}>
+          {/* Top greeting row */}
+          <View style={styles.topRow}>
+            <View style={styles.greetingContainer}>
+              <Text style={styles.greeting}>{getGreeting()}</Text>
+              <Text style={styles.userName}>Rakib 👋</Text>
             </View>
+            
+            <TouchableOpacity activeOpacity={0.8}>
+              <LinearGradient
+                colors={colors.gradients.primary}
+                style={styles.profileButton}
+              >
+                <Ionicons name="notifications-outline" size={20} color="#fff" />
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+
+          {/* Main title section */}
+          <View style={styles.titleSection}>
+            <Text style={styles.mainTitle}>Manage Your{'\n'}Daily Task</Text>
           </View>
 
           {/* Mini Stats */}
           <View style={{ 
             flexDirection: 'row', 
             justifyContent: 'space-between', 
-            marginTop: 16,
-            marginBottom: 8 
+            marginBottom: 16 
           }}>
             <View style={{ alignItems: 'center' }}>
-              <Text style={{ fontSize: 20, fontWeight: '700', color: colors.success }}>
+              <Text style={{ fontSize: 24, fontWeight: '700', color: colors.success }}>
                 {todayCompleted}
               </Text>
-              <Text style={{ fontSize: 12, color: colors.textMuted }}>Today</Text>
+              <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>Today</Text>
             </View>
             <View style={{ alignItems: 'center' }}>
-              <Text style={{ fontSize: 20, fontWeight: '700', color: colors.primary }}>
+              <Text style={{ fontSize: 24, fontWeight: '700', color: colors.primary }}>
                 {weekCompleted}
               </Text>
-              <Text style={{ fontSize: 12, color: colors.textMuted }}>This Week</Text>
+              <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>This Week</Text>
             </View>
             <View style={{ alignItems: 'center' }}>
-              <Text style={{ fontSize: 20, fontWeight: '700', color: colors.warning }}>
+              <Text style={{ fontSize: 24, fontWeight: '700', color: colors.warning }}>
                 {totalCount - completedCount}
               </Text>
-              <Text style={{ fontSize: 12, color: colors.textMuted }}>Remaining</Text>
+              <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>Remaining</Text>
             </View>
           </View>
 
+          {/* Progress bar */}
           <View style={homeStyles.progressContainer}>
             <View style={homeStyles.progressBarContainer}>
               <View style={homeStyles.progressBar}>
