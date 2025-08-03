@@ -12,10 +12,10 @@ const EmptyState = () => {
   return (
     <View style={homeStyles.emptyContainer}>
       <LinearGradient colors={colors.gradients.empty} style={homeStyles.emptyIconContainer}>
-        <Ionicons name="clipboard-outline" size={60} color={colors.textMuted} />
+        <Ionicons name="sparkles-outline" size={60} color={colors.textMuted} />
       </LinearGradient>
-      <Text style={homeStyles.emptyText}>No todos yet!</Text>
-      <Text style={homeStyles.emptySubtext}>Add your first todo above to get started</Text>
+      <Text style={homeStyles.emptyText}>Ready to Focus? 🎯</Text>
+      <Text style={homeStyles.emptySubtext}>Add your first task to start crushing your goals!</Text>
     </View>
   );
 };

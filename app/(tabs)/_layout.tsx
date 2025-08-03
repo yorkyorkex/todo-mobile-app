@@ -2,7 +2,6 @@ import useTheme from "@/hooks/useTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import React from "react";
-import { Text, View } from "react-native";
 
 const TabsLayout = () => {
 
@@ -34,7 +33,7 @@ const TabsLayout = () => {
         options={{
           title: "Todos",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="flash-outline" size={size} color={color} />
+            <Ionicons name="rocket-outline" size={size} color={color} />
           ),
         }}
       />
@@ -47,10 +46,6 @@ const TabsLayout = () => {
           ),
         }}
       />
-
-      <View>
-        <Text>Custom Tab Bar</Text>
-      </View>
     </Tabs>
   );
 };

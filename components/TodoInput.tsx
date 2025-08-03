@@ -12,6 +12,7 @@ const TodoInput = () => {
   const homeStyles = createHomeStyles(colors);
 
   const [newTodo, setNewTodo] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
   const addTodo = useMutation(api.todos.addTodo);
 
   const handleAddTodo = async () => {
@@ -30,11 +31,13 @@ const TodoInput = () => {
     <View style={homeStyles.inputSection}>
       <View style={homeStyles.inputWrapper}>
         <TextInput
-          style={homeStyles.input}
-          placeholder="What needs to be done?"
+          style={[homeStyles.input, isFocused && homeStyles.inputFocused]}
+          placeholder="What's your next win? ✨"
           value={newTodo}
           onChangeText={setNewTodo}
           onSubmitEditing={handleAddTodo}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
           placeholderTextColor={colors.textMuted}
         />
         <TouchableOpacity onPress={handleAddTodo} activeOpacity={0.8} disabled={!newTodo.trim()}>

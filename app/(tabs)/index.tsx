@@ -11,6 +11,10 @@ import { useMutation, useQuery } from "convex/react";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import { Alert, FlatList, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
+import Animated, { 
+  FadeInDown, 
+  FadeOutRight
+} from 'react-native-reanimated';
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type Todo = Doc<"todos">;
@@ -71,16 +75,21 @@ export default function Index() {
     setEditText("");
   };
 
-  const renderTodoItem = ({ item }: { item: Todo }) => {
+  const renderTodoItem = ({ item, index }: { item: Todo, index: number }) => {
     const isEditing = editingId === item._id;
+
     return (
-      <View style={homeStyles.todoItemWrapper}>
-        <LinearGradient
-          colors={colors.gradients.surface}
-          style={homeStyles.todoItem}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
+      <Animated.View 
+        style={homeStyles.todoItemWrapper}
+        entering={FadeInDown.delay(index * 100).springify()}
+        exiting={FadeOutRight.springify()}
+      >
+          <LinearGradient
+            colors={colors.gradients.surface}
+            style={homeStyles.todoItem}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
           <TouchableOpacity
             style={homeStyles.checkbox}
             activeOpacity={0.7}
@@ -154,7 +163,7 @@ export default function Index() {
             </View>
           )}
         </LinearGradient>
-      </View>
+      </Animated.View>
     );
   };
 
@@ -168,12 +177,12 @@ export default function Index() {
 
         <FlatList
           data={todos}
-          renderItem={renderTodoItem}
+          renderItem={({ item, index }) => renderTodoItem({ item, index })}
           keyExtractor={(item) => item._id}
           style={homeStyles.todoList}
           contentContainerStyle={homeStyles.todoListContent}
           ListEmptyComponent={<EmptyState />}
-          // showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator={false}
         />
       </SafeAreaView>
     </LinearGradient>
