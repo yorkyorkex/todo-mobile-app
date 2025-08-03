@@ -2,7 +2,8 @@ import { ThemeProvider } from "@/hooks/useTheme";
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { Stack } from "expo-router";
 
-const convex = new ConvexReactClient(process.env.EXPO_PUBLIC_CONVEX_URL!, {
+const convexUrl = process.env.EXPO_PUBLIC_CONVEX_URL || "https://bold-otter-585.convex.cloud";
+const convex = new ConvexReactClient(convexUrl, {
   unsavedChangesWarning: false,
 });
 
