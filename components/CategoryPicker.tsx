@@ -36,25 +36,27 @@ const CategoryPicker = ({ selectedCategory, onCategoryChange, style }: CategoryP
 
   const styles = StyleSheet.create({
     container: {
-      marginVertical: 8,
+      marginVertical: colors.spacing.md,
     },
     scrollView: {
-      paddingHorizontal: 4,
+      paddingHorizontal: colors.spacing.sm,
     },
     categoryChip: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingHorizontal: 16,
-      paddingVertical: 10,
-      borderRadius: 20,
-      marginHorizontal: 4,
-      borderWidth: 2,
+      paddingHorizontal: colors.spacing.md,
+      paddingVertical: colors.spacing.sm,
+      borderRadius: colors.borderRadius.lg,
+      marginHorizontal: colors.spacing.xs,
+      borderWidth: 1,
       minWidth: 80,
+      ...colors.shadows.sm,
     },
     categoryText: {
       fontSize: 13,
-      fontWeight: '600',
-      marginLeft: 6,
+      fontWeight: '700',
+      marginLeft: colors.spacing.sm,
+      letterSpacing: 0.1,
     },
   });
 

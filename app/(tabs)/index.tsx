@@ -1,43 +1,41 @@
-import { createHomeStyles } from "@/assets/styles/home.styles";
-import CategoryOverviewCard from "@/components/CategoryOverviewCard";
 import CelebrationAnimation from "@/components/CelebrationAnimation";
+import CategoryOverviewCard from "@/components/CategoryOverviewCard";
 import EmptyState from "@/components/EmptyState";
 import FloatingActionButton from "@/components/FloatingActionButton";
 import Header from "@/components/Header";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import SwipeableCard from "@/components/SwipeableCard";
 import TaskCard from "@/components/TaskCard";
+import TaskEditModal from "@/components/TaskEditModal";
 import TodoInput from "@/components/TodoInput";
 import { api } from "@/convex/_generated/api";
 import { Doc, Id } from "@/convex/_generated/dataModel";
 import useTheme from "@/hooks/useTheme";
-import { Ionicons } from "@expo/vector-icons";
 import { useMutation, useQuery } from "convex/react";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
-import { Alert, FlatList, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import Animated, { 
-  FadeInDown, 
-  FadeOutRight
-} from 'react-native-reanimated';
+import { Alert, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Animated, { FadeInDown, FadeOutRight } from "react-native-reanimated";
+import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 
 type Todo = Doc<"todos">;
 
 export default function Index() {
   const { colors } = useTheme();
-
-  const [editingId, setEditingId] = useState<Id<"todos"> | null>(null);
-  const [editText, setEditText] = useState("");
   const [showCelebration, setShowCelebration] = useState(false);
-
-  const homeStyles = createHomeStyles(colors);
-
+  const [searchText, setSearchText] = useState("");
+  const [activeFilter, setActiveFilter] = useState<"active" | "done">("active");
+  const [categoryFilter, setCategoryFilter] = useState<string>("");
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Todo | null>(null);
+  
   const todos = useQuery(api.todos.getTodos, { sortBy: "priority" });
   const toggleTodo = useMutation(api.todos.toggleTodo);
   const deleteTodo = useMutation(api.todos.deleteTodo);
   const updateTodo = useMutation(api.todos.updateTodo);
+  const addTodo = useMutation(api.todos.addTodo);
 
   const isLoading = todos === undefined;
 
@@ -107,27 +105,58 @@ export default function Index() {
   };
 
   const handleEditTodo = (todo: Todo) => {
-    setEditText(todo.text);
-    setEditingId(todo._id);
+    setSelectedTask(todo);
+    setShowEditModal(true);
   };
 
-  const handleSaveEdit = async () => {
-    if (editingId) {
-      try {
-        await updateTodo({ id: editingId, text: editText.trim() });
-        setEditingId(null);
-        setEditText("");
-      } catch (error) {
-        console.log("Error updating todo", error);
-        Alert.alert("Error", "Failed to update todo");
+  const handleEditModalSave = async (taskData: any) => {
+    try {
+      if (taskData.id) {
+        // Updating existing task
+        await updateTodo({ 
+          id: taskData.id, 
+          text: taskData.text,
+          priority: taskData.priority,
+          category: taskData.category,
+          progress: taskData.progress,
+          notes: taskData.notes,
+          estimatedDuration: taskData.estimatedDuration
+        });
+      } else {
+        // Creating new task
+        await addTodo({
+          text: taskData.text,
+          priority: taskData.priority,
+          category: taskData.category,
+          progress: taskData.progress || 0,
+          notes: taskData.notes,
+          estimatedDuration: taskData.estimatedDuration
+        });
       }
+    } catch (error) {
+      console.log("Error saving task", error);
+      Alert.alert("Error", "Failed to save task");
     }
   };
 
-  const handleCancelEdit = () => {
-    setEditingId(null);
-    setEditText("");
+  const handleEditModalDelete = async (taskId: string) => {
+    try {
+      await deleteTodo({ id: taskId as Id<"todos"> });
+    } catch (error) {
+      console.log("Error deleting task", error);
+      Alert.alert("Error", "Failed to delete task");
+    }
   };
+
+  const handleEditModalToggleComplete = async (taskId: string) => {
+    try {
+      await toggleTodo({ id: taskId as Id<"todos"> });
+    } catch (error) {
+      console.log("Error toggling task", error);
+      Alert.alert("Error", "Failed to toggle task");
+    }
+  };
+
 
   const getPriorityIcon = (priority: string) => {
     switch (priority) {
@@ -140,190 +169,6 @@ export default function Index() {
   };
 
 
-  const renderTodoItem = ({ item, index }: { item: Todo, index: number }) => {
-    // Safety check for item
-    if (!item || !item._id) {
-      return null;
-    }
-
-    const isEditing = editingId === item._id;
-
-    const leftAction = {
-      icon: item.isCompleted ? "close-circle" : "checkmark-circle",
-      color: item.isCompleted ? colors.warning : colors.success,
-      gradient: item.isCompleted ? colors.gradients.warning : colors.gradients.success,
-      action: () => handleQuickComplete(item._id),
-      text: item.isCompleted ? "Undo" : "Done",
-    };
-
-    const rightActions = [
-      {
-        icon: "trash" as keyof typeof Ionicons.glyphMap,
-        color: colors.danger,
-        gradient: colors.gradients.danger,
-        action: () => handleQuickDelete(item._id),
-        text: "Delete",
-      },
-    ];
-
-    return (
-      <Animated.View 
-        style={homeStyles.todoItemWrapper}
-        entering={FadeInDown.delay(index * 100).springify()}
-        exiting={FadeOutRight.springify()}
-      >
-        <SwipeableCard
-          leftAction={leftAction}
-          rightActions={rightActions}
-        >
-          <LinearGradient
-            colors={colors.gradients.surface}
-            style={[
-              homeStyles.todoItem,
-              { borderLeftWidth: 4, borderLeftColor: item.priority ? colors.priority[item.priority as keyof typeof colors.priority] : colors.primary }
-            ]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-          <TouchableOpacity
-            style={homeStyles.checkbox}
-            activeOpacity={0.7}
-            onPress={() => handleToggleTodo(item._id)}
-          >
-            <LinearGradient
-              colors={item.isCompleted ? colors.gradients.success : colors.gradients.muted}
-              style={[
-                homeStyles.checkboxInner,
-                { borderColor: item.isCompleted ? "transparent" : colors.border },
-              ]}
-            >
-              {item.isCompleted && <Ionicons name="checkmark" size={18} color="#fff" />}
-            </LinearGradient>
-          </TouchableOpacity>
-
-          {isEditing ? (
-            <View style={homeStyles.editContainer}>
-              <TextInput
-                style={homeStyles.editInput}
-                value={editText}
-                onChangeText={setEditText}
-                autoFocus
-                multiline
-                placeholder="Edit your todo..."
-                placeholderTextColor={colors.textMuted}
-              />
-              <View style={homeStyles.editButtons}>
-                <TouchableOpacity onPress={handleSaveEdit} activeOpacity={0.8}>
-                  <LinearGradient colors={colors.gradients.success} style={homeStyles.editButton}>
-                    <Ionicons name="checkmark" size={16} color="#fff" />
-                    <Text style={homeStyles.editButtonText}>Save</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-
-                <TouchableOpacity onPress={handleCancelEdit} activeOpacity={0.8}>
-                  <LinearGradient colors={colors.gradients.muted} style={homeStyles.editButton}>
-                    <Ionicons name="close" size={16} color="#fff" />
-                    <Text style={homeStyles.editButtonText}>Cancel</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              </View>
-            </View>
-          ) : (
-            <View style={homeStyles.todoTextContainer}>
-              <Text
-                style={[
-                  homeStyles.todoText,
-                  item.isCompleted && {
-                    textDecorationLine: "line-through",
-                    color: colors.textMuted,
-                    opacity: 0.6,
-                  },
-                ]}
-              >
-                {item.text}
-              </Text>
-
-              {/* Priority and Category Indicators */}
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8, marginBottom: 12 }}>
-                {/* Priority Chip */}
-                {item.priority && (
-                  <LinearGradient
-                    colors={colors.gradients[item.priority as keyof typeof colors.gradients] || colors.gradients.medium}
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      paddingHorizontal: 8,
-                      paddingVertical: 4,
-                      borderRadius: 12,
-                      marginRight: 8,
-                    }}
-                  >
-                    <Ionicons 
-                      name={getPriorityIcon(item.priority) as keyof typeof Ionicons.glyphMap} 
-                      size={12} 
-                      color="#fff" 
-                    />
-                    <Text style={{ 
-                      fontSize: 10, 
-                      fontWeight: '600', 
-                      color: '#fff', 
-                      marginLeft: 4,
-                      textTransform: 'capitalize' 
-                    }}>
-                      {item.priority}
-                    </Text>
-                  </LinearGradient>
-                )}
-
-                {/* Category Chip */}
-                {item.category && (
-                  <LinearGradient
-                    colors={colors.gradients[item.category as keyof typeof colors.gradients] || colors.gradients.personal}
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      paddingHorizontal: 8,
-                      paddingVertical: 4,
-                      borderRadius: 12,
-                    }}
-                  >
-                    <Ionicons 
-                      name={getCategoryIcon(item.category) as keyof typeof Ionicons.glyphMap} 
-                      size={12} 
-                      color="#fff" 
-                    />
-                    <Text style={{ 
-                      fontSize: 10, 
-                      fontWeight: '600', 
-                      color: '#fff', 
-                      marginLeft: 4,
-                      textTransform: 'capitalize' 
-                    }}>
-                      {item.category}
-                    </Text>
-                  </LinearGradient>
-                )}
-              </View>
-
-              <View style={homeStyles.todoActions}>
-                <TouchableOpacity onPress={() => handleEditTodo(item)} activeOpacity={0.8}>
-                  <LinearGradient colors={colors.gradients.warning} style={homeStyles.actionButton}>
-                    <Ionicons name="pencil" size={14} color="#fff" />
-                  </LinearGradient>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleDeleteTodo(item._id)} activeOpacity={0.8}>
-                  <LinearGradient colors={colors.gradients.danger} style={homeStyles.actionButton}>
-                    <Ionicons name="trash" size={14} color="#fff" />
-                  </LinearGradient>
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
-          </LinearGradient>
-        </SwipeableCard>
-      </Animated.View>
-    );
-  };
 
   const fabActions = [
     {
@@ -332,8 +177,8 @@ export default function Index() {
       color: colors.warning,
       gradient: colors.gradients.warning,
       onPress: () => {
-        // Add a quick task with high priority
-        console.log("Quick task");
+        setSelectedTask(null);
+        setShowEditModal(true);
       },
     },
     {
@@ -342,8 +187,7 @@ export default function Index() {
       color: colors.primary,
       gradient: colors.gradients.primary,
       onPress: () => {
-        // Voice input functionality
-        console.log("Voice input");
+        Alert.alert("Voice Input", "Voice input feature coming soon!");
       },
     },
     {
@@ -352,8 +196,7 @@ export default function Index() {
       color: colors.success,
       gradient: colors.gradients.success,
       onPress: () => {
-        // Camera OCR functionality
-        console.log("Camera OCR");
+        Alert.alert("Photo OCR", "Photo text recognition coming soon!");
       },
     },
   ];
@@ -402,54 +245,88 @@ export default function Index() {
   };
 
   const categories = getCategories();
-  const ongoingTodos = todos?.filter(todo => !todo.isCompleted) || [];
+  
+  // Filter todos based on search text and category
+  const filteredTodos = todos?.filter(todo => {
+    // Search filter
+    if (searchText && !todo.text.toLowerCase().includes(searchText.toLowerCase()) &&
+        !todo.category?.toLowerCase().includes(searchText.toLowerCase()) &&
+        !todo.priority?.toLowerCase().includes(searchText.toLowerCase())) {
+      return false;
+    }
+    
+    // Category filter
+    if (categoryFilter && todo.category !== categoryFilter) {
+      return false;
+    }
+    
+    return true;
+  }) || [];
+  
+  // Apply active filter
+  const displayTodos = activeFilter === "active" 
+    ? filteredTodos.filter(todo => !todo.isCompleted)
+    : filteredTodos.filter(todo => todo.isCompleted);
+    
+  const ongoingTodos = filteredTodos.filter(todo => !todo.isCompleted) || [];
+  const completedTodos = filteredTodos.filter(todo => todo.isCompleted) || [];
 
   const styles = StyleSheet.create({
     container: {
       flex: 1,
+      backgroundColor: colors.bg,
     },
     scrollContainer: {
       flex: 1,
     },
     categorySection: {
-      paddingHorizontal: 20,
-      marginBottom: 24,
+      paddingHorizontal: colors.spacing.lg,
+      marginBottom: colors.spacing.lg,
     },
     sectionTitle: {
-      fontSize: 22,
-      fontWeight: '700',
+      fontSize: 24,
+      fontWeight: '800',
       color: colors.text,
-      marginBottom: 16,
+      marginBottom: colors.spacing.lg,
+      letterSpacing: 0.3,
     },
     categoryGrid: {
       flexDirection: 'row',
       flexWrap: 'wrap',
       justifyContent: 'space-between',
+      gap: colors.spacing.md,
     },
     categoryCardWrapper: {
-      width: '48%',
-      marginBottom: 12,
+      width: '47%',
+      marginBottom: colors.spacing.md,
     },
     ongoingSection: {
-      paddingHorizontal: 20,
-      marginBottom: 100,
+      marginBottom: colors.spacing.lg,
+    },
+    completedSection: {
+      marginBottom: 120,
     },
     sectionHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: 16,
+      marginBottom: colors.spacing.md,
+      paddingHorizontal: colors.spacing.lg,
     },
     seeAllButton: {
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-      borderRadius: 20,
+      paddingHorizontal: colors.spacing.md + 2,
+      paddingVertical: colors.spacing.sm,
+      borderRadius: colors.borderRadius.lg,
       backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      ...colors.shadows.sm,
     },
     seeAllText: {
       fontSize: 14,
       color: colors.primary,
-      fontWeight: '600',
+      fontWeight: '700',
+      letterSpacing: 0.2,
     },
   });
 
@@ -461,7 +338,15 @@ export default function Index() {
           style={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
         >
-          <Header />
+          <Header 
+            onSearch={(text) => setSearchText(text)}
+            onAddTask={() => {
+              setSelectedTask(null);
+              setShowEditModal(true);
+            }}
+            activeFilter={activeFilter}
+            onFilterChange={setActiveFilter}
+          />
 
           <TodoInput />
 
@@ -477,8 +362,8 @@ export default function Index() {
                       completedCount={category.completed}
                       icon={getCategoryIcon(category.category) as keyof typeof Ionicons.glyphMap}
                       onPress={() => {
-                        // Filter todos by category
-                        console.log(`Viewing ${category.category} tasks`);
+                        setCategoryFilter(categoryFilter === category.category ? "" : category.category);
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                       }}
                     />
                   </View>
@@ -487,28 +372,39 @@ export default function Index() {
             </View>
           )}
 
-          {/* Ongoing Tasks Section */}
+          {/* Main Tasks Section */}
           <View style={styles.ongoingSection}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Ongoing</Text>
-              <TouchableOpacity style={styles.seeAllButton} activeOpacity={0.8}>
-                <Text style={styles.seeAllText}>See All</Text>
-              </TouchableOpacity>
+              <Text style={styles.sectionTitle}>
+                {activeFilter === "active" ? "Active Tasks" : "Completed Tasks"}
+                {displayTodos.length > 0 && ` (${displayTodos.length})`}
+              </Text>
             </View>
 
-            {ongoingTodos.length > 0 ? (
-              ongoingTodos.slice(0, 5).map((item, index) => (
+            {displayTodos.length > 0 ? (
+              displayTodos.map((item, index) => (
                 <TaskCard
                   key={item._id}
-                  title={item.text}
-                  category={item.category || 'personal'}
-                  priority={item.priority || 'medium'}
-                  dueDate={item.dueDate ? new Date(item.dueDate).toLocaleDateString() : undefined}
-                  progress={Math.floor(Math.random() * 100)} // Mock progress for now
-                  timeRange={item.estimatedDuration ? `${item.estimatedDuration}h` : undefined}
-                  isCompleted={item.isCompleted}
-                  onPress={() => handleEditTodo(item)}
+                  task={{
+                    _id: item._id,
+                    text: item.text,
+                    priority: item.priority || 'medium',
+                    category: item.category || 'personal',
+                    progress: activeFilter === "done" ? 100 : (item.progress || 0),
+                    dueDate: item.dueDate,
+                    isCompleted: item.isCompleted,
+                    estimatedDuration: item.estimatedDuration
+                  }}
+                  onSave={async (text) => {
+                    try {
+                      await updateTodo({ id: item._id, text });
+                    } catch (error) {
+                      console.log("Error updating todo", error);
+                    }
+                  }}
+                  onDelete={() => handleDeleteTodo(item._id)}
                   onToggle={() => handleToggleTodo(item._id)}
+                  showAvatars={activeFilter === "active" && index < 2} // Show avatars on first 2 active tasks
                 />
               ))
             ) : (
@@ -523,6 +419,18 @@ export default function Index() {
           visible={showCelebration}
           onComplete={() => setShowCelebration(false)}
           type="confetti"
+        />
+        
+        <TaskEditModal
+          visible={showEditModal}
+          task={selectedTask || undefined}
+          onClose={() => {
+            setShowEditModal(false);
+            setSelectedTask(null);
+          }}
+          onSave={handleEditModalSave}
+          onDelete={handleEditModalDelete}
+          onToggleComplete={handleEditModalToggleComplete}
         />
       </SafeAreaView>
     </LinearGradient>

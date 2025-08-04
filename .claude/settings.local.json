@@ -6,7 +6,17 @@
       "Bash(npx expo export:*)",
       "Bash(npx convex deploy)",
       "Bash(npx convex dev:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(npm start)",
+      "Bash(powershell:*)",
+      "Bash(cp:*)",
+      "mcp__sequential-thinking__sequentialthinking",
+      "mcp__magic__21st_magic_component_inspiration",
+      "mcp__puppeteer__puppeteer_navigate",
+      "mcp__puppeteer__puppeteer_screenshot",
+      "mcp__puppeteer__puppeteer_evaluate",
+      "mcp__puppeteer__puppeteer_click",
+      "mcp__puppeteer__puppeteer_fill"
     ],
     "deny": []
   }

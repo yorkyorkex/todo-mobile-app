@@ -109,6 +109,7 @@ export const addTodo = mutation({
     tags: v.optional(v.array(v.string())),
     dueDate: v.optional(v.number()),
     estimatedDuration: v.optional(v.number()),
+    progress: v.optional(v.number()),
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -121,6 +122,7 @@ export const addTodo = mutation({
       dueDate: args.dueDate,
       estimatedDuration: args.estimatedDuration,
       actualDuration: undefined,
+      progress: args.progress || 0,
       createdAt: Date.now(),
       completedAt: undefined,
       notes: args.notes,
@@ -160,6 +162,7 @@ export const updateTodo = mutation({
     tags: v.optional(v.array(v.string())),
     dueDate: v.optional(v.number()),
     estimatedDuration: v.optional(v.number()),
+    progress: v.optional(v.number()),
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -170,6 +173,7 @@ export const updateTodo = mutation({
     if (args.tags !== undefined) updateData.tags = args.tags;
     if (args.dueDate !== undefined) updateData.dueDate = args.dueDate;
     if (args.estimatedDuration !== undefined) updateData.estimatedDuration = args.estimatedDuration;
+    if (args.progress !== undefined) updateData.progress = args.progress;
     if (args.notes !== undefined) updateData.notes = args.notes;
 
     await ctx.db.patch(args.id, updateData);

@@ -56,29 +56,39 @@ const TodoInput = () => {
 
   const styles = StyleSheet.create({
     optionsContainer: {
-      marginTop: 12,
-      paddingHorizontal: 24,
+      marginTop: colors.spacing.lg,
+      paddingHorizontal: colors.spacing.xl,
+      backgroundColor: colors.surface,
+      borderRadius: colors.borderRadius.lg,
+      padding: colors.spacing.lg,
+      marginHorizontal: colors.spacing.lg,
+      borderWidth: 1,
+      borderColor: colors.border,
+      ...colors.shadows.sm,
     },
     optionsRow: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      marginBottom: 8,
+      marginBottom: colors.spacing.md,
     },
     optionsButton: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      borderRadius: 16,
+      paddingHorizontal: colors.spacing.lg,
+      paddingVertical: colors.spacing.md,
+      borderRadius: colors.borderRadius.lg,
+      backgroundColor: colors.bg,
       borderWidth: 1,
       borderColor: colors.border,
+      ...colors.shadows.sm,
     },
     optionsText: {
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: '600',
-      marginLeft: 4,
+      marginLeft: colors.spacing.sm,
       color: colors.textMuted,
+      letterSpacing: 0.1,
     },
   });
 
@@ -99,13 +109,22 @@ const TodoInput = () => {
           placeholderTextColor={colors.textMuted}
         />
         
-        <TouchableOpacity onPress={toggleOptions} activeOpacity={0.8}>
-          <LinearGradient
-            colors={colors.gradients.muted}
-            style={styles.optionsButton}
-          >
-            <Ionicons name="options" size={16} color={colors.textMuted} />
-          </LinearGradient>
+        <TouchableOpacity 
+          onPress={toggleOptions} 
+          activeOpacity={0.8}
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: colors.borderRadius.md,
+            backgroundColor: colors.bg,
+            justifyContent: 'center',
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: colors.border,
+            ...colors.shadows.sm,
+          }}
+        >
+          <Ionicons name="options" size={20} color={colors.textMuted} />
         </TouchableOpacity>
 
         <TouchableOpacity onPress={handleAddTodo} activeOpacity={0.8} disabled={!newTodo.trim()}>
@@ -113,7 +132,7 @@ const TodoInput = () => {
             colors={newTodo.trim() ? colors.gradients.primary : colors.gradients.muted}
             style={[homeStyles.addButton, !newTodo.trim() && homeStyles.addButtonDisabled]}
           >
-            <Ionicons name="add" size={24} color="#ffffff" />
+            <Ionicons name="add" size={22} color="#ffffff" />
           </LinearGradient>
         </TouchableOpacity>
       </View>
